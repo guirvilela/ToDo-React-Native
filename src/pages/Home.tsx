@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
 
-import { Header } from '../components/Header';
-import { Task, TasksList } from '../components/TasksList';
-import { TodoInput } from '../components/TodoInput';
+import { Header } from "../components/Header";
+import { Task, TasksList } from "../components/TasksList";
+import { TodoInput } from "../components/TodoInput";
+
+export interface IEditTask {
+  taskId: number;
+  taskTitle?: string;
+}
 
 export function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -11,7 +16,7 @@ export function Home() {
   function handleAddTask(newTaskTitle: string) {
     setTasks([
       ...tasks,
-      { id: tasks.length + 1, title: newTaskTitle, done: false },
+      { id: tasks.length + 1, title: newTaskTitle, done: false, edit: false },
     ]);
   }
 
@@ -29,9 +34,44 @@ export function Home() {
   }
 
   function handleRemoveTask(id: number) {
-    const taskFounded = tasks.filter((task) => task.id !== id);
+    Alert.alert("Remover item", "Tem certeza que deseja remover este item?", [
+      {
+        text: "Não",
+      },
+      {
+        text: "Sim",
+        onPress: () => {
+          const taskFounded = tasks.filter((task) => task.id !== id);
 
-    setTasks(taskFounded);
+          setTasks(taskFounded);
+        },
+      },
+    ]);
+  }
+
+  function handleEditTask({ taskId, taskTitle }: IEditTask) {
+    const updateTask = tasks.map((task) => ({ ...task }));
+
+    const taskFounded = updateTask.find((task) => task.id === taskId);
+
+    if (taskFounded && !taskTitle) {
+      taskFounded.edit = true;
+    }
+    if (taskFounded && taskTitle) {
+      taskFounded.edit = false;
+      taskFounded.title = taskTitle;
+    }
+    setTasks(updateTask);
+  }
+
+  function handleCancelEditTask(id: number) {
+    const updateTask = tasks.map((task) => ({ ...task }));
+    const taskFounded = updateTask.find((task) => task.id === id);
+
+    if (taskFounded) {
+      taskFounded.edit = false;
+    }
+    setTasks(updateTask);
   }
 
   return (
@@ -44,6 +84,8 @@ export function Home() {
         tasks={tasks}
         toggleTaskDone={handleToggleTaskDone}
         removeTask={handleRemoveTask}
+        editTask={handleEditTask}
+        cancelEditTask={handleCancelEditTask}
       />
     </View>
   );
@@ -52,6 +94,6 @@ export function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EBEBEB',
+    backgroundColor: "#EBEBEB",
   },
 });

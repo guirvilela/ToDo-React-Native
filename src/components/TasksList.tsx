@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from "react";
 import {
   FlatList,
   Image,
@@ -6,31 +6,40 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatListProps,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+  TextInput,
+} from "react-native";
+import Icon from "react-native-vector-icons/Feather";
 
-import { ItemWrapper } from './ItemWrapper';
+import { ItemWrapper } from "./ItemWrapper";
 
-import trashIcon from '../assets/icons/trash/trash.png';
+import trashIcon from "../assets/icons/trash/trash.png";
+import editIcon from "../assets/icons/edit/edit.png";
+import closeIcon from "../assets/icons/close/close.png";
+import { IEditTask } from "../pages/Home";
 
 export interface Task {
   id: number;
   title: string;
   done: boolean;
+  edit: boolean;
 }
 
 interface TasksListProps {
   tasks: Task[];
   toggleTaskDone: (id: number) => void;
   removeTask: (id: number) => void;
+  editTask: ({ taskId, taskTitle }: IEditTask) => void;
+  cancelEditTask: (id: number) => void;
 }
 
 export function TasksList({
   tasks,
   toggleTaskDone,
   removeTask,
+  editTask,
+  cancelEditTask,
 }: TasksListProps) {
+  const [newTask, setNewTask] = useState<string>("");
   return (
     <FlatList
       data={tasks}
@@ -53,22 +62,50 @@ export function TasksList({
                 >
                   {item.done && <Icon name="check" size={12} color="#FFF" />}
                 </View>
-
-                <Text
-                  style={!item.done ? styles.taskText : styles.taskTextDone}
-                >
-                  {item.title}
-                </Text>
+                {!item.edit ? (
+                  <Text
+                    style={!item.done ? styles.taskText : styles.taskTextDone}
+                  >
+                    {item.title}
+                  </Text>
+                ) : (
+                  <TextInput
+                    defaultValue={item.title}
+                    style={styles.input}
+                    onChangeText={setNewTask}
+                    autoFocus={item.edit}
+                    onSubmitEditing={() =>
+                      editTask({ taskId: item.id, taskTitle: newTask })
+                    }
+                    // value={newTask}
+                  />
+                )}
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              testID={`trash-${index}`}
-              style={{ paddingHorizontal: 24 }}
-              onPress={() => removeTask(item.id)}
-            >
-              <Image source={trashIcon} />
-            </TouchableOpacity>
+            {item.edit ? (
+              <TouchableOpacity
+                testID={`trash-${index}`}
+                style={{ paddingHorizontal: 24 }}
+                onPress={() => cancelEditTask(item.id)}
+              >
+                <Image source={closeIcon} />
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.taskButtons}>
+                <TouchableOpacity onPress={() => editTask({ taskId: item.id })}>
+                  <Image source={editIcon} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  testID={`trash-${index}`}
+                  style={{ paddingHorizontal: 24 }}
+                  onPress={() => removeTask(item.id)}
+                >
+                  <Image source={trashIcon} />
+                </TouchableOpacity>
+              </View>
+            )}
           </ItemWrapper>
         );
       }}
@@ -86,35 +123,45 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     marginBottom: 4,
     borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   taskMarker: {
     height: 16,
     width: 16,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#B2B2B2',
+    borderColor: "#B2B2B2",
     marginRight: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   taskText: {
-    color: '#666',
-    fontFamily: 'Inter-Medium',
+    color: "#666",
+    fontFamily: "Inter-Medium",
   },
   taskMarkerDone: {
     height: 16,
     width: 16,
     borderRadius: 4,
-    backgroundColor: '#1DB863',
+    backgroundColor: "#1DB863",
     marginRight: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   taskTextDone: {
-    color: '#1DB863',
-    textDecorationLine: 'line-through',
-    fontFamily: 'Inter-Medium',
+    color: "#1DB863",
+    textDecorationLine: "line-through",
+    fontFamily: "Inter-Medium",
+  },
+
+  taskButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+
+  input: {
+    padding: 0,
   },
 });
